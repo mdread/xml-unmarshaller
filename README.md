@@ -25,7 +25,7 @@ as an example lets say you have the following xml
   </groups>
 </user>
 ```
-here is the pojo ready to be mapped with the xml
+here is the java bean ready to be mapped with the xml
 
 ```java
 @XPathPrefix("/user")
