@@ -36,7 +36,7 @@ class User {
   @XPath("/age/text()")
   private Integer age;
 
-  XPath("/groups/group/text()")
+  @XPath("/groups/group/text()")
   private List<String> groups;
 
   // ... and the usual getters and setters ...
