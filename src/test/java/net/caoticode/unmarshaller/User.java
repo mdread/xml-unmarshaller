@@ -1,5 +1,6 @@
 package net.caoticode.unmarshaller;
 
+import java.util.Date;
 import java.util.List;
 
 import net.caoticode.unmarshaller.annotation.XPath;
@@ -21,6 +22,9 @@ public class User {
 	
 	@XPath("//number/text()")
 	private List<Integer> luckyNumbers;
+	
+	@XPath("/date/text()")
+	private Date birthDate;
 	
 	public Integer getId() {
 		return id;
@@ -52,11 +56,17 @@ public class User {
 	public void setLuckyNumbers(List<Integer> luckyNumbers) {
 		this.luckyNumbers = luckyNumbers;
 	}
+	public Date getBirthDate() {
+		return birthDate;
+	}
+	public void setBirthDate(Date birthDate) {
+		this.birthDate = birthDate;
+	}
 	
 	@Override
 	public String toString() {
-		return "User [id=" + id + ", name=" + name + ", password="
-				+ password + ", addresses=" + addresses + ", luckyNumbers="
-				+ luckyNumbers + "]";
+		return "User [id=" + id + ", name=" + name + ", password=" + password
+				+ ", addresses=" + addresses + ", luckyNumbers=" + luckyNumbers
+				+ ", birthDate=" + birthDate + "]";
 	}
 }
