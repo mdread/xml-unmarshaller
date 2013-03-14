@@ -15,6 +15,11 @@ import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 
+/**
+ * 
+ * @author Daniel Camarda (0xcaos@gmail.com)
+ *
+ */
 public class XMLUtil {
 	private Document xml = null;
 	XPath xPath = null;
