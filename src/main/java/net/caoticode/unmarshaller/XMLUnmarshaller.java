@@ -1,6 +1,7 @@
 package net.caoticode.unmarshaller;
 
 import java.io.Reader;
+import java.io.StringReader;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.ParameterizedType;
@@ -12,6 +13,12 @@ import java.util.Map;
 
 import net.caoticode.unmarshaller.annotation.XPath;
 import net.caoticode.unmarshaller.annotation.XPathPrefix;
+import net.caoticode.unmarshaller.parsers.BooleanParser;
+import net.caoticode.unmarshaller.parsers.DateParser;
+import net.caoticode.unmarshaller.parsers.DoubleParser;
+import net.caoticode.unmarshaller.parsers.FloatParser;
+import net.caoticode.unmarshaller.parsers.IntegerParser;
+import net.caoticode.unmarshaller.parsers.StringParser;
 import net.caoticode.unmarshaller.util.XMLUtil;
 
 /**
@@ -20,9 +27,6 @@ import net.caoticode.unmarshaller.util.XMLUtil;
  *
  */
 public class XMLUnmarshaller {
-	
-	private static Class<?>[] SIMPLE_TYPES = new Class<?>[]{String.class, Integer.class, Double.class, Float.class, Boolean.class};
-	
 	private Class<?> type;
 	private List<Tuple<Field, XPath>> classMetadata;
 	String xpathPrefix;
@@ -32,6 +36,14 @@ public class XMLUnmarshaller {
 		this.type = type;
 		this.classMetadata = extractAnnotations();
 		this.xpathPrefix = extractPrefix();
+		
+		// register default parsers
+		registerParser(new StringParser());
+		registerParser(new IntegerParser());
+		registerParser(new DoubleParser());
+		registerParser(new FloatParser());
+		registerParser(new BooleanParser());
+		registerParser(new DateParser());
 	}
 
 	@SuppressWarnings("unchecked")
@@ -79,8 +91,6 @@ public class XMLUnmarshaller {
 			return instanciateParser(parserClass, parserParams).parse(xml.read(xpath));
 		} else if(hasParser(fieldType)){
 			return getParser(fieldType).parse(xml.read(xpath));
-		} else if(isSimpleType(fieldType)){
-			return getSimpleValue(field, xpath, xml);
 		} else if(List.class.isAssignableFrom(fieldType)) {
 			return getListValue(field, xpath, xml);
 		} else {
@@ -102,26 +112,28 @@ public class XMLUnmarshaller {
 		
 	}
 	
+//	private boolean hasParser(Class<?> type){
+//		for (Class<?> parserType : parsers.keySet()) {
+//			if(parserType.isAssignableFrom(type))
+//				return true;
+//		}
+//		return false;
+//	}
+	
 	private boolean hasParser(Class<?> type){
-		for (Class<?> parserType : parsers.keySet()) {
-			if(parserType.isAssignableFrom(type))
-				return true;
-		}
-		return false;
+		return parsers.containsKey(type);
 	}
+	
+//	private ValueParser<?> getParser(Class<?> type){
+//		for (Class<?> parserType : parsers.keySet()) {
+//			if(parserType.isAssignableFrom(type))
+//				return parsers.get(parserType);
+//		}
+//		return null;
+//	}
 	
 	private ValueParser<?> getParser(Class<?> type){
-		for (Class<?> parserType : parsers.keySet()) {
-			if(parserType.isAssignableFrom(type))
-				return parsers.get(parserType);
-		}
-		return null;
-	}
-	
-	private Object getSimpleValue(Field field, String xpath, XMLUtil xml){
-		Class<?> fieldType = field.getType();
-		String val = xml.read(xpath);
-		return parseSimpleType(fieldType, val);
+		return parsers.get(type);
 	}
 	
 	private List<? extends Object> getListValue(Field field, String xpath, XMLUtil xml){
@@ -129,44 +141,19 @@ public class XMLUnmarshaller {
 		ParameterizedType parameterizedType = (ParameterizedType)field.getGenericType();
 		Class<?> genericType = (Class<?>)parameterizedType.getActualTypeArguments()[0];
 		
-		if(isSimpleType(genericType)) {
+		if(hasParser(genericType)) {
 			for (String val : xml.readList(xpath)) {
-				result.add(parseSimpleType(genericType, val));
+				result.add(getParser(genericType).parse(val));
 			}
 		} else {
-			// TODO implement
+			XMLUnmarshaller um = new XMLUnmarshaller(genericType);
+			for (String val : xml.readXMLList(xpath)) {
+				result.add(um.unmarshall(new StringReader(val)));
+			}
 		}
 		return result;
 	}
-	
-	private Object parseSimpleType(Class<?> fieldType, String val){
-		try{
-			if(String.class.isAssignableFrom(fieldType)){
-				return val;
-			} else if (Integer.class.isAssignableFrom(fieldType)) {
-				return Integer.parseInt(val);
-			} else if (Double.class.isAssignableFrom(fieldType)) {
-				return Double.parseDouble(val);
-			} else if (Float.class.isAssignableFrom(fieldType)) {
-				return Float.parseFloat(val);
-			} else if (Boolean.class.isAssignableFrom(fieldType)) {
-				return Boolean.parseBoolean(val);
-			} else {
-				return null;
-			}
-		} catch(Exception e) {
-			throw new RuntimeException(e);
-		}
-	}
 
-	private boolean isSimpleType(Class<?> type){
-		for (Class<?> simpleType : SIMPLE_TYPES) {
-			if(simpleType.isAssignableFrom(type)) return true;
-		}
-		
-		return false;
-	}
-	
 	private List<Tuple<Field, XPath>> extractAnnotations(){
 		List<Tuple<Field, XPath>> annotations = new LinkedList<XMLUnmarshaller.Tuple<Field,XPath>>();
 		for (Field field : type.getDeclaredFields()) {
