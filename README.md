@@ -11,6 +11,15 @@ mvn package
 ```
 the generated jar is under the **./target** directory
 
+or install it locally with *mvn install* and add the dependency in your pom.xml
+```xml
+<dependency>
+	<groupId>net.caoticode.unmarshaller</groupId>
+	<artifactId>xml-unmarshaller</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+</dependency>
+```
+
 Usage
 -----
 as an example lets say you have the following xml
