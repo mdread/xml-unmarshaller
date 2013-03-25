@@ -14,6 +14,10 @@ import net.caoticode.unmarshaller.ValueParser;
 public class DateParser implements ValueParser<Date> {
 	SimpleDateFormat formatter = null;
 	
+	public DateParser() {
+		formatter = new SimpleDateFormat();
+	}
+	
 	public DateParser(String pattern) {
 		formatter = new SimpleDateFormat(pattern);
 	}
